@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>朱子大衍筮法・至臻儀軌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --vintage-paper: #d8c6a8;
+            --ink-black: #1a1612;
+            --bronze-gold: #b38b4d;
+            --bright-gold: #f5e2a8;
+            --glow-gold: rgba(245, 226, 168, 0.6);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--ink-black);
+            background-image: 
+                radial-gradient(circle at center, rgba(42, 34, 21, 0.4) 0%, rgba(13, 13, 11, 1) 100%),
+                url('https://www.transparenttextures.com/patterns/p6.png');
+            color: var(--vintage-paper);
+            font-family: 'Noto Serif TC', serif;
+            overflow-x: hidden; touch-action: none;
+        }
+
+        .outer-frame {
+            position: fixed; top: 12px; left: 12px; right: 12px; bottom: 12px;
+            border: 2px solid var(--bronze-gold);
+            pointer-events: none; z-index: 100;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        .container {
+            position: relative; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; min-height: 100%; padding: 40px 20px; box-sizing: border-box;
+        }
+
+        /* 標題發光特效 */
+        header h1 {
+            font-weight: 900; font-size: 2.5rem; margin: 0;
+            letter-spacing: 10px; color: var(--bright-gold);
+            text-align: center;
+            animation: titleGlow 3s infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 10px var(--glow-gold), 0 0 20px rgba(179, 139, 77, 0.4); }
+            to { text-shadow: 0 0 25px var(--bright-gold), 0 0 45px var(--bronze-gold); transform: scale(1.02); }
+        }
+
+        #input-area { margin-top: 15vh; text-align: center; display: block; }
+        .ask-input {
+            background: transparent; border: none; border-bottom: 2px solid var(--bronze-gold);
+            color: var(--bright-gold); font-size: 1.4rem; padding: 10px;
+            width: 80vw; max-width: 350px; text-align: center; outline: none;
+            font-family: inherit; margin-bottom: 50px;
+        }
+
+        .main-btn {
+            width: 100px; height: 100px;
+            background: radial-gradient(circle, #4e3b24 0%, #1a1612 100%);
+            border: 2px solid var(--bronze-gold); border-radius: 50%;
+            color: var(--bronze-gold); font-weight: 900; font-size: 1.3rem;
+            cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 15px var(--bronze-gold);
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+
+        #stage-wrapper { display: none; width: 100%; flex-direction: column; align-items: center; }
+        #stage {
+            width: 100%; height: 350px; max-width: 800px; position: relative;
+            margin: 20px 0; background: rgba(0,0,0,0.4); border-radius: 15px;
+            overflow: hidden; border: 1px solid rgba(179, 139, 77, 0.2);
+        }
+        .stalk {
+            position: absolute; width: 5px; height: 130px;
+            background: linear-gradient(to bottom, #2a1e12, var(--bronze-gold), #2a1e12);
+            border-radius: 3px; transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        #trace-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; }
+
+        #history-panel {
+            display: flex; flex-direction: column-reverse; gap: 10px;
+            margin-top: 20px; padding: 15px; width: 100%; max-width: 300px;
+            border-radius: 10px; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(179, 139, 77, 0.1);
+        }
+        .history-row { display: flex; align-items: center; justify-content: center; gap: 15px; animation: fadeInUp 0.5s forwards; }
+        .mini-line { width: 100px; height: 8px; position: relative; }
+        .mini-line.yang { background: linear-gradient(90deg, #8a6d3b, var(--bronze-gold), #8a6d3b); }
+        .mini-line.yin { background: transparent; display: flex; justify-content: space-between; }
+        .mini-line.yin::before, .mini-line.yin::after { content: ""; width: 46px; height: 100%; background: var(--bronze-gold); }
+        .moving-dot { color: var(--bright-gold); font-size: 0.9rem; animation: pulse 1s infinite alternate; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+        #modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 11, 8, 0.98); z-index: 200;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; box-sizing: border-box;
+        }
+
+        .gua-svg-container { display: flex; gap: 30px; justify-content: center; margin: 20px 0; }
+        .summary-box { line-height: 1.8; color: #bbb; max-width: 450px; text-align: left; border-top: 1px solid rgba(179, 139, 77, 0.2); padding-top: 15px; font-size: 0.95rem;}
+        .restart-btn {
+            background: var(--bronze-gold); color: #111; border: none;
+            padding: 12px 30px; font-weight: 900; border-radius: 5px;
+            cursor: pointer; margin-top: 25px; font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+
+<div class="outer-frame"></div>
+
+<div class="container">
+    <header><h1>朱子大衍筮法</h1></header>
+
+    <div id="input-area">
+        <p style="letter-spacing: 6px; opacity: 0.7; margin-bottom: 30px;">焚香淨手・至誠感通</p>
+        <input type="text" id="ask-input" class="ask-input" placeholder="請書所占之事..." autocomplete="off">
+        <button class="main-btn" onclick="startRitual()">啟始</button>
+    </div>
+
+    <div id="stage-wrapper">
+        <div id="stage">
+            <canvas id="trace-canvas"></canvas>
+        </div>
+        <div id="history-panel"></div>
+    </div>
+</div>
+
+<div id="modal">
+    <div id="modal-q" style="color:var(--bronze-gold); margin-bottom:10px; font-style: italic;"></div>
+    <div class="gua-svg-container">
+        <div style="text-align:center">
+            <div id="ben-svg"></div>
+            <p id="ben-name" style="font-size:1.4rem; color:var(--bright-gold); margin:8px 0; font-weight:900;"></p>
+        </div>
+        <div style="text-align:center">
+            <div id="zhi-svg"></div>
+            <p id="zhi-name" style="font-size:1.4rem; color:var(--vintage-paper); margin:8px 0; font-weight:900;"></p>
+        </div>
+    </div>
+    <div id="moving-list" style="color:var(--bright-gold); margin-bottom:15px; font-weight:700;"></div>
+    <div id="rule-desc" class="summary-box"></div>
+    <button class="restart-btn" onclick="resetRitual()">重新焚香</button>
+</div>
+
+<script>
+    const GUA_DATA = {"111111":"乾為天","000000":"坤為地","010001":"水雷屯","100010":"山水蒙","111010":"水天需","010111":"天水訟","010000":"地水師","000010":"水地比","111011":"風天小畜","110111":"天澤履","111000":"地天泰","000111":"天地否","101111":"天火同人","111101":"火天大有","000100":"地山謙","001000":"雷地豫","011001":"澤雷隨","100110":"山風蠱","110000":"地澤臨","000011":"風地觀","101001":"火雷噬嗑","100101":"山火賁","000001":"山地剝","100000":"地雷復","100111":"天雷无妄","111001":"山天大畜","100001":"山雷頤","011110":"澤風大過","010010":"坎為水","101101":"離為火","011011":"澤山咸","110110":"雷風恆","001111":"天山遁","111100":"雷天大壯","000101":"火地晉","101000":"地火明夷","101011":"風火家人","110101":"火澤睽","001010":"水山蹇","010100":"雷水解","110001":"山澤損","100011":"風雷益","011111":"澤天夬","111110":"天風姤","011000":"澤地萃","000110":"地風升","011010":"澤水困","010110":"水風井","011101":"澤火革","101110":"火風鼎","001001":"震為雷","100100":"艮為山","001011":"風山漸","110100":"雷澤歸妹","101100":"雷火豐","001101":"火山旅","011011":"巽為風","110110":"兌為澤","010011":"風水渙","110010":"水澤節","110011":"風澤中孚","001100":"雷山小過","010101":"水火既濟","101010":"火水未濟"};
+
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('trace-canvas');
+    const ctx = canvas.getContext('2d');
+    const historyPanel = document.getElementById('history-panel');
+    let stalks = [], isDrawing = false, hasSplit = false, yaoHistory = [], sparkles = [];
+
+    function resize() { canvas.width = stage.offsetWidth; canvas.height = stage.offsetHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    function startRitual() {
+        if(!document.getElementById('ask-input').value) return;
+        document.getElementById('input-area').style.display = 'none';
+        document.getElementById('stage-wrapper').style.display = 'flex';
+        initStalks();
+    }
+
+    function resetRitual() {
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('stage-wrapper').style.display = 'none';
+        document.getElementById('input-area').style.display = 'block';
+        document.getElementById('ask-input').value = "";
+        yaoHistory = [];
+        historyPanel.innerHTML = "";
+    }
+
+    function initStalks() {
+        stage.querySelectorAll('.stalk').forEach(s => s.remove());
+        stalks = []; hasSplit = false;
+        const cx = stage.offsetWidth / 2, cy = stage.offsetHeight / 2;
+        for (let i = 0; i < 49; i++) {
+            const el = document.createElement('div');
+            el.className = 'stalk';
+            const x = cx - 45 + Math.random() * 90, y = cy - 60 + Math.random() * 30;
+            el.style.left = `${x}px`; el.style.top = `${y}px`;
+            el.style.transform = `rotate(${(Math.random()*15)-7.5}deg)`;
+            stage.appendChild(el);
+            stalks.push({ el, x, y });
+        }
+    }
+
+    function addSparkle(x, y) {
+        for(let i=0; i<8; i++) {
+            sparkles.push({
+                x, y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6,
+                life: 1.0, size: Math.random()*5 + 1, angle: Math.random()*Math.PI*2
+            });
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        sparkles.forEach((s, i) => {
+            s.x += s.vx; s.y += s.vy; s.life -= 0.02;
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+            ctx.fillStyle = `rgba(245, 226, 168, ${s.life})`;
+            ctx.shadowBlur = 20; ctx.shadowColor = "#f5e2a8";
+            ctx.fillRect(-s.size/2, -s.size/2, s.size, s.size);
+            ctx.restore();
+            if(s.life <= 0) sparkles.splice(i, 1);
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    const getPos = e => {
+        const t = e.touches ? e.touches[0] : e;
+        const r = stage.getBoundingClientRect();
+        return { x: t.clientX - r.left, y: t.clientY - r.top };
+    }
+
+    stage.addEventListener('mousedown', () => !hasSplit && (isDrawing = true));
+    stage.addEventListener('touchstart', e => { e.preventDefault(); !hasSplit && (isDrawing = true); });
+    stage.addEventListener('mousemove', e => {
+        if(!isDrawing) return;
+        const p = getPos(e); addSparkle(p.x, p.y);
+        stalks.forEach(s => s.side = p.x < s.x ? 'left' : 'right');
+    });
+    stage.addEventListener('touchmove', e => {
+        if(!isDrawing) return;
+        const p = getPos(e); addSparkle(p.x, p.y);
+        stalks.forEach(s => s.side = p.x < s.x ? 'left' : 'right');
+    });
+    window.addEventListener('mouseup', () => isDrawing && finishStep());
+    window.addEventListener('touchend', () => isDrawing && finishStep());
+
+    async function finishStep() {
+        isDrawing = false; hasSplit = true;
+        const L = stalks.filter(s => s.side === 'left'), R = stalks.filter(s => s.side === 'right');
+        L.forEach((s, i) => { s.el.style.left = (25 + (i%5)*12)+'px'; s.el.style.top = (85 + Math.floor(i/5)*10)+'px'; });
+        R.forEach((s, i) => { s.el.style.left = (stage.offsetWidth-110 + (i%5)*12)+'px'; s.el.style.top = (85 + Math.floor(i/5)*10)+'px'; });
+        
+        await new Promise(r => setTimeout(r, 1200));
+        const val = [6,7,7,7,8,8,8,9][Math.floor(Math.random()*8)];
+        yaoHistory.push(val);
+        
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        const label = ["初","二","三","四","五","上"][yaoHistory.length-1];
+        row.innerHTML = `<span style="color:var(--bronze-gold); font-size:0.8rem; width:35px; font-weight:700;">${label}爻</span>
+                         <div class="mini-line ${(val===7||val===9)?'yang':'yin'}"></div>
+                         <div style="width:20px;">${(val===6||val===9)?'<span class="moving-dot">❂</span>':''}</div>`;
+        historyPanel.appendChild(row);
+
+        if(yaoHistory.length < 6) setTimeout(initStalks, 1500);
+        else setTimeout(showResult, 1200);
+    }
+
+    function createGuaSVG(yaos, isTrans) {
+        let str = `<svg width="100" height="120" viewBox="0 0 100 120">`;
+        yaos.slice().reverse().forEach((v, i) => {
+            const y = 10 + i * 18;
+            let cv = isTrans ? (v===6?7:(v===9?8:v)) : v;
+            const col = (v===6||v===9) ? "#f5e2a8" : "#b38b4d";
+            if(cv===7||cv===9) str += `<rect x="10" y="${y}" width="80" height="10" fill="${col}" />`;
+            else str += `<rect x="10" y="${y}" width="35" height="10" fill="${col}" /><rect x="55" y="${y}" width="35" height="10" fill="${col}" />`;
+        });
+        return str + `</svg>`;
+    }
+
+    function showResult() {
+        const benBin = yaoHistory.map(v => (v===7||v===9)?'1':'0').join('');
+        const zhiBin = yaoHistory.map(v => (v===6||v===7)?'1':'0').join('');
+        document.getElementById('modal-q').innerText = "問： " + document.getElementById('ask-input').value;
+        document.getElementById('ben-svg').innerHTML = createGuaSVG(yaoHistory, false);
+        document.getElementById('zhi-svg').innerHTML = createGuaSVG(yaoHistory, true);
+        document.getElementById('ben-name').innerText = GUA_DATA[benBin] || "未知";
+        document.getElementById('zhi-name').innerText = (benBin===zhiBin) ? "不變" : GUA_DATA[zhiBin];
+        
+        const moving = [];
+        yaoHistory.forEach((v, i) => { if(v===6||v===9) moving.push(["初","二","三","四","五","上"][i]); });
+        document.getElementById('moving-list').innerText = moving.length > 0 ? `變爻：${moving.join('、')}爻` : "無變爻";
+        
+        let rule = (moving.length === 0) ? "察本卦之卦辭。" : 
+                   (moving.length === 1) ? `察本卦「${moving[0]}爻」之爻辭。` :
+                   (moving.length === 2) ? `察本卦二變爻之爻辭，以上位者為主。` :
+                   (moving.length === 3) ? "察本卦與之卦之卦辭。" : "變爻過多，察之卦之不變爻。";
+
+        document.getElementById('rule-desc').innerHTML = `<strong>【朱子啟蒙解法】</strong><br>此卦象揭示：${rule}`;
+        document.getElementById('modal').style.display = 'flex';
+    }
+</script>
+</body>
+</html>
